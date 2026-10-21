@@ -102,6 +102,7 @@ export const FamilyWishesWall: React.FC<FamilyWishesWallProps> = ({
                     value={senderName}
                     onChange={(e) => setSenderName(e.target.value)}
                     placeholder="Enter your name"
+                    spellCheck={false}
                     className="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-[#E8DACB] bg-[#FFFDFB] focus:outline-hidden focus:ring-2 focus:ring-[#8C3A24]/20 focus:border-[#8C3A24]"
                   />
                 </div>
@@ -157,6 +158,7 @@ export const FamilyWishesWall: React.FC<FamilyWishesWallProps> = ({
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
                   placeholder="Share your prayers, love, or special memories with Varnika..."
+                  spellCheck={false}
                   className="w-full px-3 py-2 text-xs rounded-xl border border-[#E8DACB] bg-[#FFFDFB] focus:outline-hidden focus:ring-2 focus:ring-[#8C3A24]/20 focus:border-[#8C3A24]"
                 />
               </div>
@@ -170,6 +172,7 @@ export const FamilyWishesWall: React.FC<FamilyWishesWallProps> = ({
                   value={hindiMessage}
                   onChange={(e) => setHindiMessage(e.target.value)}
                   placeholder="e.g. सदा हँसती रहो लाडली बिटिया, कुल का गौरव बढ़ाओ"
+                  spellCheck={false}
                   className="w-full px-3 py-2 text-xs font-hindi rounded-xl border border-[#E8DACB] bg-[#FFFDFB] focus:outline-hidden focus:ring-2 focus:ring-[#8C3A24]/20 focus:border-[#8C3A24]"
                 />
               </div>

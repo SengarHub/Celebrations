@@ -14,20 +14,20 @@ export const TimeCapsuleSection: React.FC<TimeCapsuleSectionProps> = ({ letters 
   };
 
   return (
-    <section id="capsule" className="py-16 bg-[#FFF9F3] border-t border-[#F2E4D5]">
+    <section id="capsule" className="py-16 bg-[#FFF9F3] border-t border-[#F2E4D5]" spellCheck={false}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Section Header */}
-        <div className="text-center max-w-3xl mx-auto mb-12">
-          <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#8C3A24] uppercase tracking-wider mb-2">
+        <div className="text-center max-w-3xl mx-auto mb-12" spellCheck={false}>
+          <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#8C3A24] uppercase tracking-wider mb-2 no-underline">
             <span>⏳</span>
-            <span>भविष्य की धरोहर · 5-Year Living Keepsake</span>
+            <span className="no-underline">भविष्य की धरोहर · 5-Year Living Keepsake</span>
             <span>⏳</span>
           </div>
-          <h2 className="text-2xl sm:text-3xl font-royal text-[#4A1D13] tracking-tight">
+          <h2 className="text-2xl sm:text-3xl font-royal text-[#4A1D13] tracking-tight no-underline">
             The 5-Year Future Time Capsule
           </h2>
-          <p className="text-sm text-[#7A6A58] mt-2 leading-relaxed">
+          <p className="text-sm text-[#7A6A58] mt-2 leading-relaxed no-underline">
             Letters sealed on her 2nd birthday (Oct 27, 2026), meant to be unlocked and read with Varnika as she blossoms through ages 3, 4, 5, 6, and 7 (up to October 2031).
           </p>
         </div>

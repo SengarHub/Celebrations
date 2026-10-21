@@ -105,6 +105,7 @@ mediaType: "image", // or "video"`;
                 value={testUrl}
                 onChange={(e) => setTestUrl(e.target.value)}
                 placeholder="Paste your Google Drive link here to test..."
+                spellCheck={false}
                 className="w-full px-3 py-2 text-xs rounded-xl border border-[#DDC6B0] bg-white focus:outline-hidden focus:ring-2 focus:ring-[#8C3A24]/20"
               />
             </div>

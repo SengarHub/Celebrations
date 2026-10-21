@@ -5,17 +5,58 @@ export interface Milestone {
   title: string;
   hindiTitle?: string;
   phase: string;
+  phaseId?: string;
+  festivalName?: string;
+  festivalIcon?: string;
   dateStr: string;
   ageMonthStr: string;
   category: MilestoneCategory;
   mediaType: 'image' | 'video';
   mediaUrl: string; // local asset path or Google Drive link
+  driveUrl?: string; // Direct link to file in Google Drive
   thumbnailUrl?: string;
   caption: string;
   traditionNote?: string;
   familyNote?: string;
   location?: string;
   tags?: string[];
+}
+
+export interface GrowthPhase {
+  id: string;
+  order: number;
+  title: string;
+  hindiTitle: string;
+  festivalName: string;
+  festivalIcon: string;
+  timeRange: string;
+  ageMonthStr: string;
+  featuredMediaUrl: string;
+  featuredMediaType: 'image' | 'video';
+  featuredThumbnailUrl?: string;
+  driveUrl: string;
+  growthStory: string;
+  traditionNote: string;
+  familyMemory: string;
+  totalItemsCount: number;
+  sampleItems: Milestone[];
+}
+
+export interface KeepsakeItem {
+  id: string;
+  filename: string;
+  title: string;
+  hindiTitle?: string;
+  type: 'image' | 'video';
+  dateStr: string;
+  phaseId: string;
+  phaseName: string;
+  festivalTag: string;
+  mediaUrl: string;
+  thumbnailUrl?: string;
+  driveUrl: string;
+  caption: string;
+  traditionNote?: string;
 }
 
 export interface FamilyWish {

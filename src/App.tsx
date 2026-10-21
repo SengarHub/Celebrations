@@ -24,8 +24,8 @@ import {
 } from './data/keepsakeData';
 import { lullabyPlayer } from './utils/audioPlayer';
 
-const STORAGE_KEY_MILESTONES = 'sengar_varnika_milestones_v1';
-const STORAGE_KEY_WISHES = 'sengar_varnika_wishes_v1';
+const STORAGE_KEY_MILESTONES = 'sengar_varnika_milestones_v5_phases';
+const STORAGE_KEY_WISHES = 'sengar_varnika_wishes_v2';
 
 export default function App() {
   const [milestones, setMilestones] = useState<Milestone[]>(() => {
@@ -141,7 +141,7 @@ export default function App() {
         {/* Welcome / Landing Hero Section */}
         <HeroSection
           onExploreJourney={scrollToJourney}
-          onOpenWishes={scrollToWishes}
+          onExploreWishes={scrollToWishes}
         />
 
         {/* Interactive Timeline / Milestone Gallery */}

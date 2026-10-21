@@ -21,6 +21,11 @@ export function extractGoogleDriveId(url: string): string | null {
   const matchLh3 = url.match(/lh3\.googleusercontent\.com\/d\/([a-zA-Z0-9_-]+)/);
   if (matchLh3 && matchLh3[1]) return matchLh3[1];
 
+  // If the string itself is a 28-40 char Google Drive ID
+  if (/^[a-zA-Z0-9_-]{28,45}$/.test(url.trim())) {
+    return url.trim();
+  }
+
   return null;
 }
 
@@ -36,6 +41,12 @@ export function formatMediaUrl(url: string, mediaType: 'image' | 'video' = 'imag
 
   // For images, Google UserContent direct CDN link works best without CORS or login issues
   return `https://lh3.googleusercontent.com/d/${driveId}`;
+}
+
+export function getDriveThumbnailUrl(url: string): string {
+  const driveId = extractGoogleDriveId(url);
+  if (!driveId) return url;
+  return `https://drive.google.com/thumbnail?id=${driveId}&sz=w800`;
 }
 
 export function isGoogleDriveEmbedVideo(url: string): boolean {

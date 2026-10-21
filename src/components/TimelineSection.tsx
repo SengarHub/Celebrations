@@ -1,7 +1,20 @@
 import React, { useState } from 'react';
-import { Milestone, MilestoneCategory } from '../types/keepsake';
-import { Maximize2, MapPin, Calendar, PlusCircle, ExternalLink, Play, LayoutGrid, Image as ImageIcon } from 'lucide-react';
-import { formatMediaUrl, isGoogleDriveEmbedVideo } from '../utils/googleDriveHelper';
+import { Milestone, GrowthPhase } from '../types/keepsake';
+import { GROWTH_PHASES, SHARED_DRIVE_FOLDER_URL } from '../data/keepsakeData';
+import { GrowingAlbumExplorer } from './GrowingAlbumExplorer';
+import { 
+  Calendar, 
+  MapPin, 
+  Sparkles, 
+  ExternalLink, 
+  Maximize2, 
+  FolderHeart, 
+  Play, 
+  ArrowRight,
+  ShieldCheck,
+  Heart
+} from 'lucide-react';
+import { triggerSparkles } from '../utils/confettiHelper';
 
 interface TimelineSectionProps {
   milestones: Milestone[];
@@ -16,223 +29,206 @@ export const TimelineSection: React.FC<TimelineSectionProps> = ({
   onOpenAddMemory,
   onOpenDriveGuide
 }) => {
-  const [activeCategory, setActiveCategory] = useState<MilestoneCategory>('all');
-  const [fitMode, setFitMode] = useState<'cover' | 'contain'>('cover');
+  const [selectedPhaseFilter, setSelectedPhaseFilter] = useState<string>('all');
 
-  const filteredMilestones = milestones.filter(m => {
-    if (activeCategory === 'all') return true;
-    return m.category === activeCategory;
-  });
+  const displayedPhases = selectedPhaseFilter === 'all' 
+    ? GROWTH_PHASES 
+    : GROWTH_PHASES.filter(p => p.id === selectedPhaseFilter);
+
+  const handleSelectPhase = (phase: GrowthPhase) => {
+    const milestone: Milestone = {
+      id: phase.id,
+      title: phase.title,
+      hindiTitle: phase.hindiTitle,
+      phase: phase.title,
+      phaseId: phase.id,
+      festivalName: phase.festivalName,
+      festivalIcon: phase.festivalIcon,
+      dateStr: phase.timeRange,
+      ageMonthStr: phase.ageMonthStr,
+      category: 'festivals',
+      mediaType: phase.featuredMediaType,
+      mediaUrl: phase.featuredMediaUrl,
+      driveUrl: phase.driveUrl,
+      thumbnailUrl: phase.featuredThumbnailUrl,
+      caption: phase.growthStory,
+      traditionNote: phase.traditionNote,
+      familyNote: phase.familyMemory,
+      location: 'Madhya Pradesh, India',
+      tags: [phase.festivalName, 'Growth Phase', phase.ageMonthStr]
+    };
+    onSelectMilestone(milestone);
+  };
 
   return (
     <section id="journey" className="py-16 bg-[#FFFDF9] border-t border-[#F2E8DC]" spellCheck={false}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Section Header */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-6">
+        <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-6" spellCheck={false}>
           <div>
-            <div className="flex items-center gap-2 text-xs font-medium text-[#9A3412] mb-1.5">
-              <span>Chronological Memories</span>
-              <span aria-hidden="true">·</span>
-              <span>Oct 2024 to Oct 2026</span>
-              <span aria-hidden="true">·</span>
-              <span>Madhya Pradesh Heritage</span>
+            <div className="flex items-center gap-2 text-xs font-semibold text-[#8C3A24] uppercase tracking-wider mb-1.5 no-underline">
+              <span>🪔</span>
+              <span className="no-underline">1-Year Landmark Growth Sequence (Oct 2025 → Oct 2026)</span>
+              <span>🪔</span>
             </div>
-            <h2 className="text-2xl sm:text-3xl font-royal text-[#4A1D13] tracking-tight">
-              The 2-Year Milestone Journey
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-royal text-[#4A1D13] tracking-tight no-underline">
+              The 10 Landmark Phases & Indian Festivals
             </h2>
-            <p className="text-sm text-[#7A6A58] mt-1 max-w-2xl">
-              From her sacred Namkaran ceremony to showing two little fingers for her 2nd birthday. Each memory preserves the traditional Rajput sanskars of the Sengar family.
+            <p className="text-sm text-[#7A6A58] mt-1.5 max-w-3xl leading-relaxed no-underline">
+              Arranged chronologically from her 1st birthday celebrations to today, highlighting Baby Varnika’s physical and emotional growth through every sacred Indian festival — Diwali, Makar Sankranti, Basant Panchami, Holi, Chaitra Navratri, Rakshabandhan, Janmashtami, Ganesh Chaturthi, Durga Pooja, and Dussehra today!
             </p>
           </div>
 
-          {/* Action buttons on header */}
-          <div className="flex flex-wrap items-center gap-2 shrink-0">
-            {/* Photo Framing Mode Toggle */}
-            <div className="flex items-center bg-[#FAF3EA] border border-[#F0E4D5] rounded-xl p-1 text-xs">
-              <button
-                onClick={() => setFitMode('cover')}
-                className={`px-2.5 py-1 rounded-lg font-medium transition-all cursor-pointer ${
-                  fitMode === 'cover'
-                    ? 'bg-white text-[#7A2E1E] shadow-2xs'
-                    : 'text-[#7A6A58] hover:text-[#4A1D13]'
-                }`}
-                title="Fill portrait frames focusing on face and gestures"
-              >
-                Framed View
-              </button>
-              <button
-                onClick={() => setFitMode('contain')}
-                className={`px-2.5 py-1 rounded-lg font-medium transition-all cursor-pointer ${
-                  fitMode === 'contain'
-                    ? 'bg-white text-[#7A2E1E] shadow-2xs'
-                    : 'text-[#7A6A58] hover:text-[#4A1D13]'
-                }`}
-                title="Show entire full photo uncropped"
-              >
-                Full Uncropped
-              </button>
-            </div>
+          {/* Quick Header Actions */}
+          <div className="flex items-center gap-2.5 shrink-0">
+            <a
+              href={SHARED_DRIVE_FOLDER_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-4 py-2 text-xs font-semibold text-amber-900 bg-[#FFF3E8] hover:bg-[#FEE5D0] border border-[#F6DBC2] rounded-xl transition-all flex items-center gap-1.5 no-underline shadow-2xs"
+            >
+              <FolderHeart className="w-4 h-4 text-amber-700" />
+              <span>Drive Folder (84 Media) ↗</span>
+            </a>
 
             <button
-              onClick={onOpenDriveGuide}
-              className="px-3 py-2 text-xs font-medium text-[#7A2E1E] bg-[#FFF3E8] hover:bg-[#FEE5D0] border border-[#F6DBC2] rounded-xl transition-colors flex items-center gap-1.5 cursor-pointer"
-            >
-              <ExternalLink className="w-3.5 h-3.5" />
-              <span>Drive Link Guide</span>
-            </button>
-            <button
               onClick={onOpenAddMemory}
-              className="px-3.5 py-2 text-xs font-medium text-white bg-[#8C3A24] hover:bg-[#722F1D] rounded-xl shadow-xs transition-colors flex items-center gap-1.5 cursor-pointer"
+              className="px-4 py-2 text-xs font-semibold text-white bg-[#8C3A24] hover:bg-[#722F1D] rounded-xl shadow-xs transition-colors flex items-center gap-1.5 no-underline cursor-pointer"
             >
-              <PlusCircle className="w-3.5 h-3.5" />
-              <span>Add Memory</span>
+              <span>+ Add Memory</span>
             </button>
           </div>
         </div>
 
-        {/* Category Filters (Clean functional button segmented control) */}
-        <div className="flex flex-wrap items-center gap-1.5 p-1.5 bg-[#FAF3EA] rounded-xl border border-[#F0E4D5] mb-8 max-w-xl">
+        {/* Phase Navigation Filter Pills */}
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-3 mb-10 text-xs scrollbar-thin" spellCheck={false}>
           <button
-            onClick={() => setActiveCategory('all')}
-            className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all cursor-pointer ${
-              activeCategory === 'all'
-                ? 'bg-white text-[#7A2E1E] shadow-2xs'
-                : 'text-[#7A6A58] hover:text-[#4A1D13]'
+            onClick={() => setSelectedPhaseFilter('all')}
+            className={`px-3.5 py-1.5 rounded-xl font-medium transition-all cursor-pointer whitespace-nowrap shrink-0 no-underline ${
+              selectedPhaseFilter === 'all'
+                ? 'bg-[#8C3A24] text-white shadow-2xs font-semibold'
+                : 'bg-[#FAF3EA] text-[#6B5E51] hover:text-[#4A1D13] border border-[#F0E4D5]'
             }`}
           >
-            All Milestones ({milestones.length})
+            All 10 Phases (Sequence)
           </button>
-          <button
-            onClick={() => setActiveCategory('sanskars')}
-            className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all cursor-pointer ${
-              activeCategory === 'sanskars'
-                ? 'bg-white text-[#7A2E1E] shadow-2xs'
-                : 'text-[#7A6A58] hover:text-[#4A1D13]'
-            }`}
-          >
-            Sanskars & Pujas
-          </button>
-          <button
-            onClick={() => setActiveCategory('festivals')}
-            className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all cursor-pointer ${
-              activeCategory === 'festivals'
-                ? 'bg-white text-[#7A2E1E] shadow-2xs'
-                : 'text-[#7A6A58] hover:text-[#4A1D13]'
-            }`}
-          >
-            Indian Festivals
-          </button>
-          <button
-            onClick={() => setActiveCategory('firsts')}
-            className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all cursor-pointer ${
-              activeCategory === 'firsts'
-                ? 'bg-white text-[#7A2E1E] shadow-2xs'
-                : 'text-[#7A6A58] hover:text-[#4A1D13]'
-            }`}
-          >
-            Milestone Firsts
-          </button>
-          <button
-            onClick={() => setActiveCategory('play')}
-            className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all cursor-pointer ${
-              activeCategory === 'play'
-                ? 'bg-white text-[#7A2E1E] shadow-2xs'
-                : 'text-[#7A6A58] hover:text-[#4A1D13]'
-            }`}
-          >
-            Joy & Giggles
-          </button>
+
+          {GROWTH_PHASES.map((p) => (
+            <button
+              key={p.id}
+              onClick={() => setSelectedPhaseFilter(p.id)}
+              className={`px-3 py-1.5 rounded-xl font-medium transition-all cursor-pointer whitespace-nowrap shrink-0 flex items-center gap-1.5 no-underline ${
+                selectedPhaseFilter === p.id
+                  ? 'bg-[#8C3A24] text-white shadow-2xs font-semibold'
+                  : 'bg-[#FAF3EA] text-[#6B5E51] hover:text-[#4A1D13] border border-[#F0E4D5]'
+              }`}
+            >
+              <span>{p.festivalIcon}</span>
+              <span>Phase {p.order}: {p.festivalName}</span>
+            </button>
+          ))}
         </div>
 
-        {/* Milestone Cards Grid - Optimized for Vertical Smartphone Photos */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredMilestones.map((item, index) => {
-            const formattedUrl = formatMediaUrl(item.mediaUrl, item.mediaType);
-            const isEmbedVideo = item.mediaType === 'video' && isGoogleDriveEmbedVideo(formattedUrl);
+        {/* The 10 Curated Growth Landmark Frames Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-7" spellCheck={false}>
+          {displayedPhases.map((phase) => {
+            const isVideo = phase.featuredMediaType === 'video';
 
             return (
               <div
-                key={item.id}
-                onClick={() => onSelectMilestone(item)}
-                className="group cursor-pointer bg-white rounded-3xl border border-[#F0E4D5] hover:border-[#DDBB9E] transition-all duration-300 shadow-xs hover:shadow-md flex flex-col overflow-hidden"
+                key={phase.id}
+                onClick={() => handleSelectPhase(phase)}
+                className="group cursor-pointer bg-white rounded-3xl border border-[#EDDCBA] hover:border-[#D6A778] transition-all duration-300 shadow-xs hover:shadow-lg flex flex-col overflow-hidden"
               >
-                {/* Media Container: 4:5 Portrait Ratio to match camera orientation */}
-                <div className="relative aspect-[4/5] bg-[#FAF5EE] overflow-hidden flex items-center justify-center">
-                  {isEmbedVideo ? (
-                    <div className="w-full h-full flex items-center justify-center bg-stone-900 text-white">
-                      <Play className="w-10 h-10 text-amber-400 group-hover:scale-110 transition-transform" />
-                      <span className="absolute bottom-3 left-3 text-xs bg-black/60 px-2 py-0.5 rounded text-white">
-                        Video Memory
-                      </span>
+                {/* Media Header Container with Centered Alignment */}
+                <div className="relative aspect-[4/5] bg-[#FAF5EE] overflow-hidden flex items-center justify-center border-b border-[#F4E8D8]">
+                  <img
+                    src={phase.featuredMediaUrl}
+                    alt={phase.title}
+                    className="w-full h-full object-cover object-center group-hover:scale-103 transition-transform duration-500"
+                    referrerPolicy="no-referrer"
+                    loading="lazy"
+                  />
+
+                  {isVideo && (
+                    <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
+                      <div className="w-13 h-13 rounded-full bg-amber-500 text-white flex items-center justify-center shadow-md group-hover:scale-110 transition-transform">
+                        <Play className="w-6 h-6 fill-white ml-0.5" />
+                      </div>
                     </div>
-                  ) : (
-                    <img
-                      src={formattedUrl}
-                      alt={item.title}
-                      className={`w-full h-full transition-transform duration-500 group-hover:scale-102 ${
-                        fitMode === 'cover'
-                          ? 'object-cover object-top'
-                          : 'object-contain p-2'
-                      }`}
-                      referrerPolicy="no-referrer"
-                      loading={index < 4 ? 'eager' : 'lazy'}
-                    />
                   )}
 
-                  {/* Top Badges (quiet unboxed text inside subtle overlay) */}
-                  <div className="absolute top-3 left-3 right-3 flex items-center justify-between text-xs text-white">
-                    <span className="bg-black/60 backdrop-blur-xs px-2.5 py-1 rounded-md text-[11px] font-medium">
-                      {item.phase}
+                  {/* Top Bar Badges */}
+                  <div className="absolute top-3 left-3 right-3 flex items-center justify-between text-xs text-white pointer-events-none">
+                    <span className="bg-black/65 backdrop-blur-xs px-2.5 py-1 rounded-md text-[11px] font-semibold flex items-center gap-1.5">
+                      <span>{phase.festivalIcon}</span>
+                      <span>Phase {phase.order}</span>
                     </span>
-                    <span className="bg-black/60 backdrop-blur-xs p-1.5 rounded-md opacity-0 group-hover:opacity-100 transition-opacity">
-                      <Maximize2 className="w-3.5 h-3.5" />
+                    <span className="bg-black/65 backdrop-blur-xs px-2.5 py-1 rounded-md text-[11px] font-medium">
+                      {phase.ageMonthStr}
                     </span>
                   </div>
 
-                  {/* Scrim Gradient at bottom */}
-                  <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/60 to-transparent pointer-events-none flex items-end p-3">
-                    <span className="text-xs text-white font-medium flex items-center gap-1">
-                      <Calendar className="w-3 h-3 text-amber-300" />
-                      {item.dateStr}
+                  {/* Scrim Gradient at bottom with Date */}
+                  <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/75 to-transparent pointer-events-none flex items-end p-3.5">
+                    <span className="text-xs text-white font-medium flex items-center gap-1.5 no-underline">
+                      <Calendar className="w-3.5 h-3.5 text-amber-300" />
+                      {phase.timeRange}
                     </span>
                   </div>
                 </div>
 
-                {/* Card Content */}
-                <div className="p-5 flex-1 flex flex-col justify-between">
+                {/* Card Content & Cultural Lore */}
+                <div className="p-5 sm:p-6 flex-1 flex flex-col justify-between" spellCheck={false}>
                   <div>
-                    {/* Hindi Title & Sanskrit Blessing */}
-                    {item.hindiTitle && (
-                      <p className="text-xs font-hindi text-[#8C3A24] mb-1">
-                        {item.hindiTitle}
+                    {/* Hindi Title */}
+                    <div className="flex items-center justify-between mb-1">
+                      <p className="text-xs font-hindi text-[#8C3A24] font-semibold no-underline">
+                        {phase.hindiTitle}
                       </p>
-                    )}
+                      <span className="text-xs px-2 py-0.5 rounded-full bg-[#FFF3E8] text-[#8C3A24] font-medium border border-[#F8DCBF]">
+                        {phase.festivalName}
+                      </span>
+                    </div>
 
-                    <h3 className="text-base font-royal font-semibold text-[#3D1A12] leading-snug group-hover:text-[#8C3A24] transition-colors">
-                      {item.title}
+                    {/* Phase Title */}
+                    <h3 className="text-base sm:text-lg font-royal font-bold text-[#4A1D13] leading-snug group-hover:text-[#8C3A24] transition-colors mt-1 no-underline">
+                      {phase.title}
                     </h3>
 
-                    <p className="text-xs text-[#6B5E51] mt-2 line-clamp-2 leading-relaxed">
-                      {item.caption}
+                    {/* Growth Story */}
+                    <p className="text-xs text-[#5C5248] mt-2.5 line-clamp-3 leading-relaxed no-underline">
+                      {phase.growthStory}
                     </p>
 
-                    {item.traditionNote && (
-                      <div className="mt-3 p-2.5 bg-[#FFF9F3] rounded-xl border border-[#F8EADC] text-xs text-[#7A402B]">
-                        <span className="font-semibold text-amber-800">संस्कार परंपरा:</span> {item.traditionNote}
-                      </div>
-                    )}
+                    {/* Tradition Note */}
+                    <div className="mt-3.5 p-3 rounded-xl bg-[#FFF9F3] border border-[#F7E7D6] text-[11px] text-[#7A3620] leading-relaxed">
+                      <span className="font-bold text-[#8C3A24] block mb-0.5">संस्कार एवं उत्सव परंपरा:</span>
+                      {phase.traditionNote}
+                    </div>
                   </div>
 
-                  {/* Card Footer with clean unboxed metadata */}
-                  <div className="mt-4 pt-3 border-t border-[#F5EBE1] flex items-center justify-between text-xs text-[#8A7B6D]">
-                    <span className="flex items-center gap-1">
-                      <MapPin className="w-3 h-3 text-amber-700" />
-                      {item.location || 'Madhya Pradesh'}
-                    </span>
-                    <span className="text-amber-800 font-medium">
-                      View Memory →
-                    </span>
+                  {/* Card Footer with Drive link & View Button */}
+                  <div className="mt-5 pt-3.5 border-t border-[#F5EBE1] flex items-center justify-between text-xs">
+                    <a
+                      href={phase.driveUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={(e) => e.stopPropagation()}
+                      className="text-[11px] font-medium text-amber-800 hover:text-amber-900 bg-[#FDF4EB] px-2.5 py-1 rounded-md border border-[#F4E1CE] no-underline flex items-center gap-1"
+                      title="Open in Google Drive"
+                    >
+                      <span>Drive ↗</span>
+                    </a>
+
+                    <button
+                      onClick={() => handleSelectPhase(phase)}
+                      className="text-[#8C3A24] font-semibold group-hover:translate-x-0.5 transition-transform flex items-center gap-1 no-underline cursor-pointer"
+                    >
+                      <span>Explore Chapter</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </button>
                   </div>
 
                 </div>
@@ -240,6 +236,13 @@ export const TimelineSection: React.FC<TimelineSectionProps> = ({
             );
           })}
         </div>
+
+        {/* 
+          THE GRAND FINAL FRAME:
+          "Living Digital Keepsake Explorer (Next 5 Years Growth Box)"
+          Equipped with Left/Right Arrows, Randomizer, and complete 84+ collection!
+        */}
+        <GrowingAlbumExplorer onSelectMilestone={onSelectMilestone} />
 
       </div>
     </section>

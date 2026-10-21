@@ -78,7 +78,7 @@ export const AddMemoryModal: React.FC<AddMemoryModalProps> = ({
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4" spellCheck={false}>
           
           {/* Media URL */}
           <div>
@@ -91,6 +91,7 @@ export const AddMemoryModal: React.FC<AddMemoryModalProps> = ({
               value={mediaUrl}
               onChange={(e) => setMediaUrl(e.target.value)}
               placeholder="e.g. https://drive.google.com/file/d/... or /assets/..."
+              spellCheck={false}
               className="w-full px-3 py-2 text-xs rounded-xl border border-[#E8DACB] bg-white focus:outline-hidden focus:ring-2 focus:ring-[#8C3A24]/20"
             />
             <p className="text-[11px] text-[#8A7B6D] mt-1">

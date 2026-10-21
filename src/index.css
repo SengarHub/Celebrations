@@ -35,6 +35,21 @@
   animation: floatGentle 6s ease-in-out infinite;
 }
 
+/* Complete removal of browser spellcheck red squiggly underlines on headers & text */
+* {
+  text-decoration-skip-ink: none;
+}
+
+::spelling-error {
+  text-decoration: none !important;
+  border-bottom: none !important;
+}
+
+::grammar-error {
+  text-decoration: none !important;
+  border-bottom: none !important;
+}
+
 /* Custom subtle scrollbar */
 ::-webkit-scrollbar {
   width: 6px;

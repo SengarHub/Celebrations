@@ -14,20 +14,20 @@ export const TraditionShowcase: React.FC = () => {
   };
 
   return (
-    <section id="traditions" className="py-16 bg-[#FFF9F3] border-t border-[#F2E4D5]">
+    <section id="traditions" className="py-16 bg-[#FFF9F3] border-t border-[#F2E4D5]" spellCheck={false}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Section Header */}
-        <div className="text-center max-w-3xl mx-auto mb-12">
-          <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#8C3A24] uppercase tracking-wider mb-2">
+        <div className="text-center max-w-3xl mx-auto mb-12" spellCheck={false}>
+          <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#8C3A24] uppercase tracking-wider mb-2 no-underline">
             <span>🪔</span>
-            <span>राजपूत संस्कार व भारतीय संस्कृति</span>
+            <span className="no-underline">राजपूत संस्कार व भारतीय संस्कृति</span>
             <span>🪔</span>
           </div>
-          <h2 className="text-2xl sm:text-3xl font-royal text-[#4A1D13] tracking-tight">
+          <h2 className="text-2xl sm:text-3xl font-royal text-[#4A1D13] tracking-tight no-underline">
             Indian Hindu Traditions & Rajput Heritage
           </h2>
-          <p className="text-sm text-[#6B5E51] mt-2 leading-relaxed">
+          <p className="text-sm text-[#6B5E51] mt-2 leading-relaxed no-underline">
             In the Sengar family roots of Madhya Pradesh, raising a daughter is considered the highest spiritual grace. Every festival in her first 2 years has anchored Varnika in purity, strength, and timeless sanskars.
           </p>
         </div>
@@ -70,18 +70,18 @@ export const TraditionShowcase: React.FC = () => {
                   {trad.hindi}
                 </div>
 
-                <h4 className="text-base font-royal font-semibold text-[#4A1D13] mb-2">
-                  {trad.name}
+                <h4 className="text-base font-royal font-semibold text-[#4A1D13] mb-2 no-underline">
+                  {trad.title}
                 </h4>
 
-                <p className="text-xs text-[#6B5E51] leading-relaxed">
-                  {trad.significance}
+                <p className="text-xs text-[#6B5E51] leading-relaxed no-underline">
+                  {trad.desc}
                 </p>
               </div>
 
-              <div className="mt-4 pt-3 border-t border-[#F8EFE6] text-[11px] text-[#9A3412] font-medium flex items-center gap-1.5">
-                <span>पवित्र प्रतीक:</span>
-                <span className="text-[#5C5248]">{trad.motif}</span>
+              <div className="mt-4 pt-3 border-t border-[#F8EFE6] text-[11px] text-[#9A3412] font-medium flex items-center gap-1.5 no-underline">
+                <span className="no-underline">पवित्र परंपरा:</span>
+                <span className="text-[#5C5248] no-underline">राजपूत संस्कृति</span>
               </div>
             </div>
           ))}
