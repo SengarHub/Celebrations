@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { KeepsakeItem, Milestone } from '../types/keepsake';
 import { ALL_DRIVE_MEDIA_ITEMS } from '../data/driveCatalog';
 import { SHARED_DRIVE_FOLDER_URL } from '../data/keepsakeData';
@@ -15,9 +15,17 @@ import {
   Image as ImageIcon,
   Sparkles,
   Calendar,
-  Clock
+  Clock,
+  ArrowUpDown,
+  RotateCcw
 } from 'lucide-react';
 import { triggerSparkles, triggerPushpaVarsha } from '../utils/confettiHelper';
+import { 
+  surpriseMemoryManager, 
+  isItemNewUpload, 
+  convertItemToMilestone,
+  SurpriseFilterPool 
+} from '../utils/shuffleDeck';
 
 interface GrowingAlbumExplorerProps {
   onSelectMilestone?: (milestone: Milestone) => void;
@@ -26,18 +34,39 @@ interface GrowingAlbumExplorerProps {
 export const GrowingAlbumExplorer: React.FC<GrowingAlbumExplorerProps> = ({
   onSelectMilestone
 }) => {
-  const [filterType, setFilterType] = useState<'all' | 'image' | 'video'>('all');
+  const [filterType, setFilterType] = useState<SurpriseFilterPool>('all');
   const [selectedFestival, setSelectedFestival] = useState<string>('all');
+  const [sortOrder, setSortOrder] = useState<'latest' | 'chronological'>('latest');
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
   const filmstripRef = useRef<HTMLDivElement>(null);
 
+  // Dynamic counts for all 144 Drive items
+  const counts = useMemo(() => {
+    const total = ALL_DRIVE_MEDIA_ITEMS.length;
+    const newUploads = ALL_DRIVE_MEDIA_ITEMS.filter(it => isItemNewUpload(it)).length;
+    const videos = ALL_DRIVE_MEDIA_ITEMS.filter(it => it.type === 'video').length;
+    const photos = ALL_DRIVE_MEDIA_ITEMS.filter(it => it.type === 'image').length;
+    return { total, newUploads, videos, photos };
+  }, []);
+
   // Filter items
-  const filteredItems = ALL_DRIVE_MEDIA_ITEMS.filter(item => {
-    if (filterType !== 'all' && item.type !== filterType) return false;
-    if (selectedFestival !== 'all' && item.phaseId !== selectedFestival) return false;
-    return true;
-  });
+  const filteredItems = useMemo(() => {
+    let list = ALL_DRIVE_MEDIA_ITEMS.filter(item => {
+      if (filterType === 'new-uploads' && !isItemNewUpload(item)) return false;
+      if (filterType === 'videos' && item.type !== 'video') return false;
+      if (filterType === 'photos' && item.type !== 'image') return false;
+      if (selectedFestival !== 'all' && item.phaseId !== selectedFestival) return false;
+      return true;
+    });
+
+    if (sortOrder === 'latest') {
+      // Show newest 2nd Birthday / 2026 uploads first
+      list = [...list].reverse();
+    }
+    return list;
+  }, [filterType, selectedFestival, sortOrder]);
 
   const currentItem = filteredItems[currentIndex] || filteredItems[0] || ALL_DRIVE_MEDIA_ITEMS[0];
 
@@ -88,35 +117,40 @@ export const GrowingAlbumExplorer: React.FC<GrowingAlbumExplorerProps> = ({
     setCurrentIndex(prev => (prev - 1 + filteredItems.length) % filteredItems.length);
   };
 
-  const pickRandom = () => {
-    if (filteredItems.length <= 1) return;
-    let nextIdx = Math.floor(Math.random() * filteredItems.length);
-    if (nextIdx === currentIndex) {
-      nextIdx = (nextIdx + 1) % filteredItems.length;
-    }
-    setCurrentIndex(nextIdx);
+  // Fair Non-Repeating Surprise Memory Pick
+  const pickRandom = (targetPool: SurpriseFilterPool = filterType) => {
     triggerPushpaVarsha();
+    const { item, stats } = surpriseMemoryManager.getNextSurprise(targetPool, currentItem?.id);
+    
+    // Find index of chosen item in current filteredItems
+    const targetIdx = filteredItems.findIndex(it => it.id === item.id);
+    if (targetIdx !== -1) {
+      setCurrentIndex(targetIdx);
+    } else {
+      // If item was outside the current filter, adjust filter to include it
+      if (targetPool === 'new-uploads' && filterType !== 'new-uploads') {
+        setFilterType('new-uploads');
+      } else {
+        setFilterType('all');
+      }
+      setSelectedFestival('all');
+      // Set to item after state settle
+      setTimeout(() => {
+        const idx = ALL_DRIVE_MEDIA_ITEMS.findIndex(it => it.id === item.id);
+        setCurrentIndex(idx !== -1 ? idx : 0);
+      }, 50);
+    }
+
+    const poolLabel = targetPool === 'new-uploads' ? '✨ New Upload' : '🎲 Surprise Memory';
+    setToastMessage(`${poolLabel} (${stats.visitedCount} of ${stats.totalCount} explored · No repeats)`);
+    setTimeout(() => {
+      setToastMessage(null);
+    }, 3000);
   };
 
   const handleOpenInLightbox = () => {
     if (onSelectMilestone && currentItem) {
-      const m: Milestone = {
-        id: currentItem.id,
-        title: currentItem.title,
-        phase: currentItem.phaseName,
-        dateStr: currentItem.dateStr,
-        ageMonthStr: 'Last 1 Year Journey',
-        category: 'festivals',
-        mediaType: currentItem.type,
-        mediaUrl: currentItem.mediaUrl,
-        driveUrl: currentItem.driveUrl,
-        thumbnailUrl: currentItem.thumbnailUrl,
-        caption: currentItem.caption,
-        traditionNote: currentItem.traditionNote,
-        location: 'Madhya Pradesh, India',
-        tags: [currentItem.festivalTag, currentItem.phaseName]
-      };
-      onSelectMilestone(m);
+      onSelectMilestone(convertItemToMilestone(currentItem));
     }
   };
 
@@ -137,7 +171,7 @@ export const GrowingAlbumExplorer: React.FC<GrowingAlbumExplorerProps> = ({
             Living Keepsake Explorer & Album Box
           </h3>
           <p className="text-sm text-[#7A6A58] mt-1 max-w-2xl no-underline">
-            Browse through all 84 authentic photos and video recordings from the Google Drive album using the left & right arrows, or hit <strong className="text-[#8C3A24]">"Surprise Memory"</strong>. As more memories are added over the next 5 years, this album continues to blossom.
+            Browse through all {ALL_DRIVE_MEDIA_ITEMS.length} authentic photos and video recordings from the Google Drive album using the left & right arrows, or hit <strong className="text-[#8C3A24]">"Surprise Memory"</strong>. As more memories are added over the next 5 years, this album continues to blossom.
           </p>
         </div>
 
@@ -151,15 +185,23 @@ export const GrowingAlbumExplorer: React.FC<GrowingAlbumExplorerProps> = ({
             title="Open original Google Drive folder"
           >
             <FolderHeart className="w-4 h-4 text-amber-700" />
-            <span>Open Google Drive Folder (84) ↗</span>
+            <span>Open Google Drive Folder ({ALL_DRIVE_MEDIA_ITEMS.length}) ↗</span>
           </a>
         </div>
       </div>
 
+      {/* Floating Toast Notification for Album Explorer */}
+      {toastMessage && (
+        <div className="fixed top-20 right-4 sm:right-8 z-50 bg-stone-900/95 text-white text-xs px-4 py-2.5 rounded-full shadow-2xl border border-amber-400/40 flex items-center gap-2 backdrop-blur-md transition-all animate-bounce">
+          <Sparkles className="w-4 h-4 text-amber-300 shrink-0" />
+          <span className="font-medium text-amber-100">{toastMessage}</span>
+        </div>
+      )}
+
       {/* Filter and Controls Toolbar */}
       <div className="p-3 bg-[#FAF4ED] rounded-2xl border border-[#F0E2D2] mb-6 flex flex-wrap items-center justify-between gap-3 shadow-2xs" spellCheck={false}>
-        {/* Type Segments */}
-        <div className="flex items-center gap-1 bg-white p-1 rounded-xl border border-[#EADBCC] text-xs">
+        {/* Type & Upload Segments */}
+        <div className="flex flex-wrap items-center gap-1 bg-white p-1 rounded-xl border border-[#EADBCC] text-xs">
           <button
             onClick={() => setFilterType('all')}
             className={`px-3 py-1 rounded-lg font-medium transition-all cursor-pointer no-underline ${
@@ -168,35 +210,57 @@ export const GrowingAlbumExplorer: React.FC<GrowingAlbumExplorerProps> = ({
                 : 'text-[#7A6A58] hover:text-[#4A1D13]'
             }`}
           >
-            All Media ({ALL_DRIVE_MEDIA_ITEMS.length})
+            All Media ({counts.total})
           </button>
           <button
-            onClick={() => setFilterType('image')}
+            onClick={() => setFilterType('new-uploads')}
             className={`px-3 py-1 rounded-lg font-medium transition-all cursor-pointer no-underline flex items-center gap-1 ${
-              filterType === 'image'
-                ? 'bg-[#8C3A24] text-white shadow-2xs font-semibold'
-                : 'text-[#7A6A58] hover:text-[#4A1D13]'
+              filterType === 'new-uploads'
+                ? 'bg-amber-600 text-white shadow-2xs font-bold'
+                : 'text-amber-800 hover:text-amber-950 bg-amber-50/70 border border-amber-200/60 font-semibold'
             }`}
+            title="Browse all 60 newly uploaded photos & videos of Baby Varnika"
           >
-            <ImageIcon className="w-3.5 h-3.5" />
-            <span>Photos (44)</span>
+            <Sparkles className="w-3.5 h-3.5 text-amber-500 fill-amber-300" />
+            <span>✨ New Uploads ({counts.newUploads})</span>
           </button>
           <button
-            onClick={() => setFilterType('video')}
+            onClick={() => setFilterType('videos')}
             className={`px-3 py-1 rounded-lg font-medium transition-all cursor-pointer no-underline flex items-center gap-1 ${
-              filterType === 'video'
+              filterType === 'videos'
                 ? 'bg-[#8C3A24] text-white shadow-2xs font-semibold'
                 : 'text-[#7A6A58] hover:text-[#4A1D13]'
             }`}
           >
             <Video className="w-3.5 h-3.5" />
-            <span>Videos (40)</span>
+            <span>Videos ({counts.videos})</span>
+          </button>
+          <button
+            onClick={() => setFilterType('photos')}
+            className={`px-3 py-1 rounded-lg font-medium transition-all cursor-pointer no-underline flex items-center gap-1 ${
+              filterType === 'photos'
+                ? 'bg-[#8C3A24] text-white shadow-2xs font-semibold'
+                : 'text-[#7A6A58] hover:text-[#4A1D13]'
+            }`}
+          >
+            <ImageIcon className="w-3.5 h-3.5" />
+            <span>Photos ({counts.photos})</span>
           </button>
         </div>
 
-        {/* Festival Quick Filter Dropdown */}
-        <div className="flex items-center gap-2 text-xs">
-          <span className="text-[#7A6A58] font-medium hidden sm:inline">Festival Phase:</span>
+        {/* Sort Order & Festival Quick Filter Dropdown */}
+        <div className="flex flex-wrap items-center gap-2 text-xs">
+          {/* Sort Order Toggle */}
+          <button
+            onClick={() => setSortOrder(prev => prev === 'latest' ? 'chronological' : 'latest')}
+            className="px-3 py-1.5 bg-white border border-[#EADBCC] rounded-xl text-xs text-[#5C5248] hover:text-[#4A1D13] font-medium flex items-center gap-1.5 cursor-pointer shadow-2xs transition-colors"
+            title="Toggle between Latest Uploads First and Chronological sequence"
+          >
+            <ArrowUpDown className="w-3.5 h-3.5 text-amber-700" />
+            <span>Order: {sortOrder === 'latest' ? '✨ Newest First' : '📅 1st → 2nd Bday'}</span>
+          </button>
+
+          {/* Festival Dropdown */}
           <select
             value={selectedFestival}
             onChange={(e) => setSelectedFestival(e.target.value)}
@@ -216,15 +280,25 @@ export const GrowingAlbumExplorer: React.FC<GrowingAlbumExplorerProps> = ({
           </select>
         </div>
 
-        {/* Action Controls */}
+        {/* Action Controls: Surprise Randomizer & Slideshow */}
         <div className="flex items-center gap-2">
-          {/* Surprise Randomizer Button */}
+          {/* Surprise New Uploads Quick Button */}
           <button
-            onClick={pickRandom}
-            className="px-3.5 py-1.5 bg-gradient-to-r from-amber-500 to-rose-500 hover:from-amber-600 hover:to-rose-600 text-white text-xs font-semibold rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 no-underline"
-            title="Pick a random photo or video memory"
+            onClick={() => pickRandom('new-uploads')}
+            className="px-3 py-1.5 bg-[#FFF2E2] hover:bg-[#FEE5CD] text-[#8C3A24] border border-[#F6DAC0] text-xs font-semibold rounded-xl shadow-2xs transition-all flex items-center gap-1 cursor-pointer active:scale-95 no-underline"
+            title="Randomize exclusively among newly uploaded memories without repeats"
           >
-            <Shuffle className="w-3.5 h-3.5" />
+            <Sparkles className="w-3 h-3 text-amber-600" />
+            <span>Surprise New ✨</span>
+          </button>
+
+          {/* Main Surprise Memory Button (Fair Non-Repeating Shuffle) */}
+          <button
+            onClick={() => pickRandom('all')}
+            className="px-3.5 py-1.5 bg-gradient-to-r from-amber-500 via-orange-500 to-rose-600 hover:from-amber-600 hover:to-rose-700 text-white text-xs font-bold rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 no-underline"
+            title="Fair non-repeating shuffle through all 144 Drive memories"
+          >
+            <Shuffle className="w-3.5 h-3.5 text-white" />
             <span>Surprise Memory 🎲</span>
           </button>
 
@@ -335,6 +409,14 @@ export const GrowingAlbumExplorer: React.FC<GrowingAlbumExplorerProps> = ({
         <div className="p-5 sm:p-6 bg-white" spellCheck={false}>
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
+              {/* New Upload Highlight Badge */}
+              {isItemNewUpload(currentItem) && (
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 bg-amber-50 border border-amber-300 text-amber-900 rounded-full text-xs font-bold mb-2 shadow-2xs">
+                  <Sparkles className="w-3.5 h-3.5 text-amber-600 animate-spin" />
+                  <span>✨ Newly Uploaded Memory (Turning 2 Years Old)</span>
+                </div>
+              )}
+
               <div className="flex items-center gap-2 mb-1">
                 <span className="text-amber-700 text-sm">🪔</span>
                 <span className="text-xs font-semibold text-[#8C3A24]">{currentItem.festivalTag}</span>
@@ -373,7 +455,7 @@ export const GrowingAlbumExplorer: React.FC<GrowingAlbumExplorerProps> = ({
         <div className="px-5 py-4 bg-[#FAF5EE] border-t border-[#F2E4D5]">
           <div className="flex items-center justify-between text-xs text-[#7A6A58] mb-2.5">
             <span className="font-semibold text-[#4A1D13]">Filmstrip Gallery (Click any thumbnail to view)</span>
-            <span className="text-[11px] text-[#8C7A6B]">Scroll sideways for all 84 items →</span>
+            <span className="text-[11px] text-[#8C7A6B]">Scroll sideways for all {filteredItems.length} items →</span>
           </div>
 
           <div 
@@ -383,6 +465,7 @@ export const GrowingAlbumExplorer: React.FC<GrowingAlbumExplorerProps> = ({
             {filteredItems.map((item, idx) => {
               const isSelected = idx === currentIndex;
               const isVid = item.type === 'video';
+              const isNew = isItemNewUpload(item);
               const thumbSrc = isVid ? (item.thumbnailUrl || item.mediaUrl) : item.mediaUrl;
 
               return (
@@ -403,14 +486,16 @@ export const GrowingAlbumExplorer: React.FC<GrowingAlbumExplorerProps> = ({
                     className="w-full h-full object-cover object-center"
                     loading="lazy"
                   />
+                  {isNew && (
+                    <span className="absolute top-1 left-1 text-[8px] font-extrabold bg-amber-500 text-white px-1 py-0.2 rounded shadow-xs z-10">
+                      NEW
+                    </span>
+                  )}
                   {isVid && (
                     <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
                       <Play className="w-4 h-4 fill-white text-white opacity-90" />
                     </div>
                   )}
-                  <span className="absolute bottom-1 right-1 text-[9px] bg-black/70 text-white px-1 rounded">
-                    {idx + 1}
-                  </span>
                 </button>
               );
             })}

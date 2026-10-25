@@ -2,6 +2,7 @@ import React from 'react';
 import { Volume2, VolumeX, Sparkles, FolderHeart } from 'lucide-react';
 import { triggerPushpaVarsha } from '../utils/confettiHelper';
 import { SHARED_DRIVE_FOLDER_URL } from '../data/keepsakeData';
+import { ALL_DRIVE_MEDIA_ITEMS } from '../data/driveCatalog';
 
 interface HeaderNavProps {
   isPlayingMusic: boolean;
@@ -48,10 +49,10 @@ export const HeaderNav: React.FC<HeaderNavProps> = ({
             target="_blank"
             rel="noopener noreferrer"
             className="hover:text-[#7A2E1E] transition-colors whitespace-nowrap shrink-0 text-amber-900 text-xs flex items-center gap-1.5 bg-[#FDF4EB] px-3 py-1.5 rounded-lg border border-[#F5E2CE] no-underline font-semibold"
-            title="Open Google Drive Folder with all 46 photos & videos"
+            title={`Open Google Drive Folder with all ${ALL_DRIVE_MEDIA_ITEMS.length} photos & videos`}
           >
             <FolderHeart className="w-3.5 h-3.5 text-amber-700" />
-            <span>Drive Folder (46) ↗</span>
+            <span>Drive Folder ({ALL_DRIVE_MEDIA_ITEMS.length}) ↗</span>
           </a>
         </nav>
 
@@ -59,23 +60,27 @@ export const HeaderNav: React.FC<HeaderNavProps> = ({
         <div className="flex items-center gap-2 sm:gap-3 shrink-0">
           <button
             onClick={onToggleMusic}
-            title={isPlayingMusic ? 'Pause gentle lullaby' : 'Play soft Indian lullaby'}
-            aria-label="Toggle lullaby music"
-            className={`p-2 rounded-full border transition-all text-xs flex items-center gap-1.5 cursor-pointer ${
+            title={isPlayingMusic ? 'Pause birthday music' : 'Play high-volume Indian birthday music'}
+            aria-label="Toggle birthday music"
+            className={`px-3 py-1.5 rounded-full border transition-all text-xs flex items-center gap-1.5 cursor-pointer shadow-xs active:scale-95 ${
               isPlayingMusic 
-                ? 'bg-amber-100 border-amber-300 text-amber-900 shadow-xs' 
+                ? 'bg-gradient-to-r from-amber-100 to-orange-100 border-amber-300 text-amber-950 font-bold' 
                 : 'bg-white border-[#EAD9C9] text-[#7A6A58] hover:bg-[#FAF6F0]'
             }`}
           >
             {isPlayingMusic ? (
               <>
-                <Volume2 className="w-4 h-4 text-amber-700 animate-pulse" />
-                <span className="hidden sm:inline text-xs font-medium pr-1 text-amber-900">Music Playing</span>
+                <Volume2 className="w-4 h-4 text-orange-600 animate-pulse" />
+                <span className="hidden sm:inline text-xs font-bold text-orange-900">🎂 Birthday Music</span>
+                <span className="flex items-end gap-0.5 h-3">
+                  <span className="w-0.5 bg-orange-600 rounded-full animate-[bounce_0.6s_infinite]" style={{ height: '70%' }} />
+                  <span className="w-0.5 bg-amber-600 rounded-full animate-[bounce_0.8s_infinite]" style={{ height: '100%' }} />
+                </span>
               </>
             ) : (
               <>
-                <VolumeX className="w-4 h-4" />
-                <span className="hidden sm:inline text-xs font-medium pr-1">Soft Music</span>
+                <VolumeX className="w-4 h-4 text-stone-500" />
+                <span className="hidden sm:inline text-xs font-semibold text-[#8C3A24]">🎂 Birthday Music</span>
               </>
             )}
           </button>

@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Heart, Sparkles, MapPin, ChevronDown, FolderHeart } from 'lucide-react';
+import { Calendar, Heart, Sparkles, MapPin, ChevronDown, FolderHeart, Music, Volume2, Dices } from 'lucide-react';
 import { triggerPushpaVarsha } from '../utils/confettiHelper';
 import { SHARED_DRIVE_FOLDER_URL } from '../data/keepsakeData';
+import { ALL_DRIVE_MEDIA_ITEMS } from '../data/driveCatalog';
+import { celebrationPlayer } from '../utils/audioPlayer';
 
 interface HeroSectionProps {
   onExploreJourney: () => void;
   onExploreWishes: () => void;
+  onSurpriseMemory?: () => void;
 }
 
 const HERO_PORTRAITS = [
@@ -41,7 +44,8 @@ const HERO_PORTRAITS = [
 
 export const HeroSection: React.FC<HeroSectionProps> = ({
   onExploreJourney,
-  onExploreWishes
+  onExploreWishes,
+  onSurpriseMemory
 }) => {
   const [activePhotoIdx, setActivePhotoIdx] = useState(0);
   const activePortrait = HERO_PORTRAITS[activePhotoIdx];
@@ -181,6 +185,18 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                 <ChevronDown className="w-4 h-4" />
               </button>
 
+              {/* Surprise Memory Quick Dice Button */}
+              {onSurpriseMemory && (
+                <button
+                  onClick={onSurpriseMemory}
+                  className="px-4 py-2.5 bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 hover:from-amber-600 hover:to-orange-600 text-white text-sm font-bold rounded-xl shadow-xs transition-all flex items-center gap-2 cursor-pointer no-underline transform hover:scale-105 active:scale-95"
+                  title="Surprise Memory 🎲 (Shuffle to a unique photo or video memory without repeats)"
+                >
+                  <Dices className="w-4 h-4 text-white" />
+                  <span>Surprise Memory 🎲</span>
+                </button>
+              )}
+
               <button
                 onClick={onExploreWishes}
                 className="px-4 py-2.5 bg-white hover:bg-[#FAF6F0] text-[#7A2E1E] text-sm font-medium rounded-xl border border-[#E8D7C6] transition-all flex items-center gap-1.5 cursor-pointer no-underline"
@@ -189,15 +205,25 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                 <span>Family Wishes Wall</span>
               </button>
 
+              {/* High-Volume Birthday Cake Cutting Celebration Button */}
+              <button
+                onClick={() => celebrationPlayer.celebrateCakeCutting()}
+                className="px-4 py-2.5 bg-gradient-to-r from-amber-600 via-orange-600 to-rose-600 hover:from-amber-700 hover:to-orange-700 text-white text-sm font-bold rounded-xl shadow-md transition-all flex items-center gap-2 cursor-pointer no-underline transform hover:scale-105 active:scale-95"
+                title="Play high-volume Indian birthday music & shower flowers for cake cutting!"
+              >
+                <span>🎂</span>
+                <span>Play Cake Cutting Music 🔊</span>
+              </button>
+
               <a
                 href={SHARED_DRIVE_FOLDER_URL}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="px-4 py-2.5 bg-[#FFF2E2] hover:bg-[#FEE7CC] text-[#9A3412] text-sm font-medium rounded-xl border border-[#F6DBC2] transition-all flex items-center gap-1.5 cursor-pointer no-underline"
-                title="Open Google Drive folder with 46 original photos & videos"
+                title={`Open Google Drive folder with all ${ALL_DRIVE_MEDIA_ITEMS.length} original photos & videos`}
               >
                 <FolderHeart className="w-4 h-4 text-amber-700" />
-                <span>Google Drive Album (46) ↗</span>
+                <span>Google Drive Album ({ALL_DRIVE_MEDIA_ITEMS.length}) ↗</span>
               </a>
 
               <button

@@ -1,9 +1,10 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Milestone } from '../types/keepsake';
-import { X, ChevronLeft, ChevronRight, Calendar, MapPin, Sparkles, Share2, ExternalLink, Play } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight, Calendar, MapPin, Sparkles, Share2, ExternalLink, Play, Dices } from 'lucide-react';
 import { formatMediaUrl, isGoogleDriveEmbedVideo } from '../utils/googleDriveHelper';
-import { triggerSparkles } from '../utils/confettiHelper';
+import { triggerSparkles, triggerPushpaVarsha } from '../utils/confettiHelper';
 import { SHARED_DRIVE_FOLDER_URL } from '../data/keepsakeData';
+import { ALL_DRIVE_MEDIA_ITEMS } from '../data/driveCatalog';
 
 interface LightboxModalProps {
   milestone: Milestone;
@@ -12,26 +13,70 @@ interface LightboxModalProps {
   onNavigate: (milestone: Milestone) => void;
 }
 
+import { 
+  ALL_DRIVE_MILESTONES, 
+  surpriseMemoryManager, 
+  isItemNewUpload,
+  SurpriseFilterPool 
+} from '../utils/shuffleDeck';
+
 export const LightboxModal: React.FC<LightboxModalProps> = ({
   milestone,
   allMilestones,
   onClose,
   onNavigate
 }) => {
-  const currentIndex = allMilestones.findIndex(m => m.id === milestone.id);
-  const prevMilestone = currentIndex > 0 ? allMilestones[currentIndex - 1] : allMilestones[allMilestones.length - 1];
-  const nextMilestone = currentIndex < allMilestones.length - 1 ? allMilestones[currentIndex + 1] : allMilestones[0];
+  const [isRollingDice, setIsRollingDice] = useState(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [dicePool, setDicePool] = useState<SurpriseFilterPool>('all');
+
+  // Navigation list is ALWAYS the full 144 Drive milestones to prevent getting trapped in 10 phases
+  const navigationList = ALL_DRIVE_MILESTONES;
+
+  let currentIndex = navigationList.findIndex(m => m.id === milestone.id);
+  if (currentIndex === -1) {
+    // If opened from a phase card like 'phase-turning-two-today', find the first media item from that phase
+    currentIndex = navigationList.findIndex(m => (m.tags && m.tags.includes(milestone.title)) || m.phase === milestone.title);
+    if (currentIndex === -1) currentIndex = 0;
+  }
+  const safeIndex = currentIndex >= 0 ? currentIndex : 0;
+  const prevMilestone = safeIndex > 0 ? navigationList[safeIndex - 1] : navigationList[navigationList.length - 1];
+  const nextMilestone = safeIndex < navigationList.length - 1 ? navigationList[safeIndex + 1] : navigationList[0];
+
+  const handleSurpriseDice = (overridePool?: SurpriseFilterPool) => {
+    setIsRollingDice(true);
+    triggerPushpaVarsha();
+
+    const poolToUse = overridePool || dicePool;
+    const { milestone: nextMemory, stats } = surpriseMemoryManager.getNextSurprise(poolToUse, milestone.id);
+    onNavigate(nextMemory);
+
+    const isNew = isItemNewUpload(nextMemory);
+    const poolLabel = poolToUse === 'new-uploads' ? '✨ New Upload' : '🎲 Surprise Memory';
+    setToastMessage(`${poolLabel} (${stats.visitedCount} of ${stats.totalCount} explored · No repeats)`);
+
+    setTimeout(() => {
+      setIsRollingDice(false);
+    }, 500);
+
+    setTimeout(() => {
+      setToastMessage(null);
+    }, 3000);
+  };
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
       if (e.key === 'ArrowLeft') onNavigate(prevMilestone);
       if (e.key === 'ArrowRight') onNavigate(nextMilestone);
+      if (e.key === 'r' || e.key === 'R' || e.key === 'd' || e.key === 'D') {
+        handleSurpriseDice();
+      }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [currentIndex, allMilestones, onClose, onNavigate, prevMilestone, nextMilestone]);
+  }, [safeIndex, navigationList, onClose, onNavigate, prevMilestone, nextMilestone, milestone.id, dicePool]);
 
   const formattedUrl = formatMediaUrl(milestone.mediaUrl, milestone.mediaType);
   const isEmbedVideo = milestone.mediaType === 'video' && (isGoogleDriveEmbedVideo(formattedUrl) || (milestone.driveUrl && milestone.driveUrl.includes('drive.google.com/file/d/')));
@@ -64,14 +109,48 @@ export const LightboxModal: React.FC<LightboxModalProps> = ({
       {/* Modal Container */}
       <div className="relative bg-[#FFFDF9] rounded-3xl overflow-hidden max-w-5xl w-full max-h-[95vh] flex flex-col lg:flex-row shadow-2xl border border-stone-800/20">
         
-        {/* Close Button */}
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 z-20 p-2.5 bg-black/50 hover:bg-black/75 text-white rounded-full transition-colors cursor-pointer"
-          aria-label="Close modal"
-        >
-          <X className="w-5 h-5" />
-        </button>
+        {/* Floating Toast Notification for Surprise Memory Feedback */}
+        {toastMessage && (
+          <div className="absolute top-16 right-4 sm:right-6 z-40 bg-stone-900/95 text-white text-xs px-4 py-2 rounded-full shadow-2xl border border-amber-400/40 flex items-center gap-2 backdrop-blur-md transition-all animate-bounce">
+            <Sparkles className="w-3.5 h-3.5 text-amber-300 shrink-0" />
+            <span className="font-medium text-amber-100">{toastMessage}</span>
+          </div>
+        )}
+
+        {/* Top Control Bar with Small Surprise Memory Dice Button & Close Button */}
+        <div className="absolute top-3.5 right-3.5 sm:top-4 sm:right-4 z-30 flex items-center gap-2">
+          {/* Quick Dice from New Uploads (if wanted) */}
+          <button
+            onClick={() => handleSurpriseDice('new-uploads')}
+            className="hidden md:flex items-center gap-1 px-2.5 py-1.5 bg-black/60 hover:bg-black/80 text-amber-200 hover:text-white rounded-full text-xs border border-amber-400/30 transition-all cursor-pointer no-underline"
+            title="Surprise from Newly Uploaded 60 Memories ✨"
+          >
+            <span>✨ New Uploads</span>
+          </button>
+
+          {/* Small Surprise Memory Dice Button */}
+          <button
+            onClick={() => handleSurpriseDice('all')}
+            className="group flex items-center gap-1.5 px-2.5 py-1.5 sm:px-3 sm:py-2 bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 hover:from-amber-600 hover:to-orange-600 text-white rounded-full shadow-lg border border-amber-300/40 transition-all transform hover:scale-105 active:scale-95 cursor-pointer no-underline"
+            title="Surprise Memory 🎲 (Fair non-repeating shuffle through all 144 Drive memories)"
+            aria-label="Surprise Memory 🎲"
+          >
+            <div className={`flex items-center justify-center transition-transform duration-500 ${isRollingDice ? 'rotate-180 scale-110' : 'group-hover:rotate-12'}`}>
+              <Dices className="w-4 h-4 text-white" />
+            </div>
+            <span className="text-xs font-semibold tracking-tight text-white hidden sm:inline">Surprise Memory</span>
+            <span className="text-sm">🎲</span>
+          </button>
+
+          {/* Close Button */}
+          <button
+            onClick={onClose}
+            className="p-2 sm:p-2.5 bg-black/60 hover:bg-black/85 text-white rounded-full transition-colors cursor-pointer border border-white/10"
+            aria-label="Close modal"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
 
         {/* Left Side: Media Display with Next/Prev Arrows - Centered and Aligned */}
         <div className="relative lg:w-3/5 bg-stone-950 flex items-center justify-center min-h-[320px] sm:min-h-[440px] max-h-[55vh] lg:max-h-full p-2">
@@ -111,15 +190,23 @@ export const LightboxModal: React.FC<LightboxModalProps> = ({
             <ChevronRight className="w-5 h-5" />
           </button>
 
-          {/* Counter Badge */}
-          <div className="absolute bottom-3 left-3 bg-black/60 backdrop-blur-xs text-white text-xs px-2.5 py-1 rounded-md">
-            {currentIndex + 1} of {allMilestones.length}
+          {/* Counter Badge with Scope */}
+          <div className="absolute bottom-3 left-3 bg-black/70 backdrop-blur-xs text-white text-xs px-2.5 py-1 rounded-md border border-white/10">
+            {safeIndex + 1} of {navigationList.length} memories
           </div>
         </div>
 
         {/* Right Side: Rich Narrative & Cultural Notes */}
         <div className="lg:w-2/5 p-6 sm:p-8 flex flex-col justify-between overflow-y-auto max-h-[45vh] lg:max-h-[90vh]" spellCheck={false}>
           <div>
+            {/* Newly Uploaded Badge */}
+            {isItemNewUpload(milestone) && (
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-300 rounded-full text-xs font-bold text-amber-900 mb-3 shadow-2xs">
+                <Sparkles className="w-3.5 h-3.5 text-amber-600 animate-pulse" />
+                <span>✨ New Upload · Turning 2 Years Old</span>
+              </div>
+            )}
+
             {/* Phase & Date Badge */}
             <div className="flex items-center justify-between text-xs text-[#9A3412] mb-3 no-underline">
               <span className="font-semibold uppercase tracking-wider">{milestone.phase}</span>
@@ -196,14 +283,26 @@ export const LightboxModal: React.FC<LightboxModalProps> = ({
           </div>
 
           {/* Modal Footer Controls */}
-          <div className="mt-6 pt-4 border-t border-[#F2E8DC] flex items-center justify-between gap-3">
-            <button
-              onClick={handleShare}
-              className="px-3.5 py-2 text-xs font-medium text-[#7A2E1E] bg-[#FFF2E2] hover:bg-[#FEE5CD] rounded-xl border border-[#F6DBC2] transition-colors flex items-center gap-1.5 cursor-pointer no-underline"
-            >
-              <Share2 className="w-3.5 h-3.5" />
-              <span>Share Memory</span>
-            </button>
+          <div className="mt-6 pt-4 border-t border-[#F2E8DC] flex flex-wrap items-center justify-between gap-2.5">
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleShare}
+                className="px-3 py-2 text-xs font-medium text-[#7A2E1E] bg-[#FFF2E2] hover:bg-[#FEE5CD] rounded-xl border border-[#F6DBC2] transition-colors flex items-center gap-1.5 cursor-pointer no-underline"
+              >
+                <Share2 className="w-3.5 h-3.5" />
+                <span>Share</span>
+              </button>
+
+              {/* Small Surprise Memory Dice Button in Footer */}
+              <button
+                onClick={() => handleSurpriseDice('all')}
+                className="px-3 py-2 text-xs font-semibold text-[#8C3A24] bg-[#FFF3E8] hover:bg-[#FEE5D0] active:scale-95 rounded-xl border border-[#F6DBC2] transition-all flex items-center gap-1.5 cursor-pointer no-underline shadow-2xs group"
+                title="Surprise Memory 🎲 (Shuffle to a random memory)"
+              >
+                <Dices className={`w-3.5 h-3.5 text-amber-700 transition-transform ${isRollingDice ? 'animate-spin' : 'group-hover:rotate-45'}`} />
+                <span>Surprise Memory 🎲</span>
+              </button>
+            </div>
 
             {milestone.driveUrl ? (
               <a
@@ -212,7 +311,7 @@ export const LightboxModal: React.FC<LightboxModalProps> = ({
                 rel="noopener noreferrer"
                 className="text-xs text-[#8C3A24] font-medium flex items-center gap-1 cursor-pointer no-underline bg-[#FAF3EA] px-3 py-2 rounded-xl border border-[#F0E4D5] hover:bg-[#F5E8DC]"
               >
-                <span>Open in Google Drive</span>
+                <span>Google Drive</span>
                 <ExternalLink className="w-3.5 h-3.5" />
               </a>
             ) : (

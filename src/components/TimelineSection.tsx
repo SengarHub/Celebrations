@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Milestone, GrowthPhase } from '../types/keepsake';
 import { GROWTH_PHASES, SHARED_DRIVE_FOLDER_URL } from '../data/keepsakeData';
+import { ALL_DRIVE_MEDIA_ITEMS } from '../data/driveCatalog';
 import { GrowingAlbumExplorer } from './GrowingAlbumExplorer';
 import { 
   Calendar, 
@@ -12,9 +13,11 @@ import {
   Play, 
   ArrowRight,
   ShieldCheck,
-  Heart
+  Heart,
+  Dices
 } from 'lucide-react';
-import { triggerSparkles } from '../utils/confettiHelper';
+import { triggerSparkles, triggerPushpaVarsha } from '../utils/confettiHelper';
+import { surpriseMemoryManager, isItemNewUpload, convertItemToMilestone } from '../utils/shuffleDeck';
 
 interface TimelineSectionProps {
   milestones: Milestone[];
@@ -35,7 +38,20 @@ export const TimelineSection: React.FC<TimelineSectionProps> = ({
     ? GROWTH_PHASES 
     : GROWTH_PHASES.filter(p => p.id === selectedPhaseFilter);
 
+  const handleSurpriseClick = () => {
+    triggerPushpaVarsha();
+    const { milestone } = surpriseMemoryManager.getNextSurprise('all');
+    onSelectMilestone(milestone);
+  };
+
   const handleSelectPhase = (phase: GrowthPhase) => {
+    // If this phase has authentic drive items, start with the first authentic drive item from this phase
+    const phaseDriveItems = ALL_DRIVE_MEDIA_ITEMS.filter(it => it.phaseId === phase.id);
+    if (phaseDriveItems.length > 0) {
+      onSelectMilestone(convertItemToMilestone(phaseDriveItems[0]));
+      return;
+    }
+
     const milestone: Milestone = {
       id: phase.id,
       title: phase.title,
@@ -80,21 +96,30 @@ export const TimelineSection: React.FC<TimelineSectionProps> = ({
             </p>
           </div>
 
-          {/* Quick Header Actions */}
-          <div className="flex items-center gap-2.5 shrink-0">
+          {/* Quick Header Actions with Surprise Memory Button */}
+          <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+            <button
+              onClick={handleSurpriseClick}
+              className="px-3.5 py-2 text-xs font-bold text-white bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 hover:from-amber-600 hover:to-orange-600 rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 no-underline"
+              title="Surprise Memory 🎲 (Shuffle to a unique photo or video memory)"
+            >
+              <Dices className="w-4 h-4 text-white" />
+              <span>Surprise Memory 🎲</span>
+            </button>
+
             <a
               href={SHARED_DRIVE_FOLDER_URL}
               target="_blank"
               rel="noopener noreferrer"
-              className="px-4 py-2 text-xs font-semibold text-amber-900 bg-[#FFF3E8] hover:bg-[#FEE5D0] border border-[#F6DBC2] rounded-xl transition-all flex items-center gap-1.5 no-underline shadow-2xs"
+              className="px-3.5 py-2 text-xs font-semibold text-amber-900 bg-[#FFF3E8] hover:bg-[#FEE5D0] border border-[#F6DBC2] rounded-xl transition-all flex items-center gap-1.5 no-underline shadow-2xs"
             >
               <FolderHeart className="w-4 h-4 text-amber-700" />
-              <span>Drive Folder (84 Media) ↗</span>
+              <span>Drive ({ALL_DRIVE_MEDIA_ITEMS.length} Media) ↗</span>
             </a>
 
             <button
               onClick={onOpenAddMemory}
-              className="px-4 py-2 text-xs font-semibold text-white bg-[#8C3A24] hover:bg-[#722F1D] rounded-xl shadow-xs transition-colors flex items-center gap-1.5 no-underline cursor-pointer"
+              className="px-3.5 py-2 text-xs font-semibold text-white bg-[#8C3A24] hover:bg-[#722F1D] rounded-xl shadow-xs transition-colors flex items-center gap-1.5 no-underline cursor-pointer"
             >
               <span>+ Add Memory</span>
             </button>
@@ -197,8 +222,27 @@ export const TimelineSection: React.FC<TimelineSectionProps> = ({
                       {phase.title}
                     </h3>
 
+                    {/* Drive Items Count & New Uploads Pill */}
+                    {(() => {
+                      const phaseItems = ALL_DRIVE_MEDIA_ITEMS.filter(it => it.phaseId === phase.id);
+                      const newUploadsCount = phaseItems.filter(it => isItemNewUpload(it)).length;
+                      return (
+                        <div className="flex items-center gap-1.5 mt-2 mb-1 flex-wrap">
+                          <span className="text-[11px] font-semibold text-[#8C3A24] bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200/80">
+                            {phaseItems.length > 0 ? `${phaseItems.length} Drive Photos & Videos` : 'Curated Landmark Media'}
+                          </span>
+                          {newUploadsCount > 0 && (
+                            <span className="text-[10px] font-bold text-amber-900 bg-amber-100/90 px-2 py-0.5 rounded-full border border-amber-300 flex items-center gap-1">
+                              <Sparkles className="w-3 h-3 text-amber-600" />
+                              <span>{newUploadsCount} New</span>
+                            </span>
+                          )}
+                        </div>
+                      );
+                    })()}
+
                     {/* Growth Story */}
-                    <p className="text-xs text-[#5C5248] mt-2.5 line-clamp-3 leading-relaxed no-underline">
+                    <p className="text-xs text-[#5C5248] mt-2 line-clamp-3 leading-relaxed no-underline">
                       {phase.growthStory}
                     </p>
 
@@ -240,7 +284,7 @@ export const TimelineSection: React.FC<TimelineSectionProps> = ({
         {/* 
           THE GRAND FINAL FRAME:
           "Living Digital Keepsake Explorer (Next 5 Years Growth Box)"
-          Equipped with Left/Right Arrows, Randomizer, and complete 84+ collection!
+          Equipped with Left/Right Arrows, Randomizer, and complete 144+ collection!
         */}
         <GrowingAlbumExplorer onSelectMilestone={onSelectMilestone} />
 

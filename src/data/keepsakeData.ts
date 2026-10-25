@@ -22,7 +22,7 @@ export const GROWTH_PHASES: GrowthPhase[] = [
     growthStory: "Completing 365 glorious days of life! Taking independent steps, standing without support, tasting sweet kheer with silver spoon, and watching terracotta diyas sparkle in the Sengar courtyard.",
     traditionNote: "Deepawali Lakshmi Pujan and Ayushya Havan in Rajput tradition invoking longevity, health, and radiant grace for the daughter of the clan.",
     familyMemory: "Rohit Papa held your hand as you tried to catch the golden glow of the Diwali lamps with your tiny fingers.",
-    totalItemsCount: 1,
+    totalItemsCount: 42,
     sampleItems: []
   },
   {
@@ -130,7 +130,7 @@ export const GROWTH_PHASES: GrowthPhase[] = [
     growthStory: "Fascinated by colorful Rakhi threads, dancing gracefully like little Radha Rani in peacock-feather attire, waving the Indian tricolor flag high on Independence Day.",
     traditionNote: "The Rajput brotherly vow of lifetime protection, swinging the Bal Gopal cradle (Jhulanotsav), and receiving elder blessings.",
     familyMemory: "Varnika looked at her reflection in the mirror with the peacock feather in her hair and gave herself the sweetest flying kiss!",
-    totalItemsCount: 11,
+    totalItemsCount: 12,
     sampleItems: []
   },
   {
@@ -184,7 +184,7 @@ export const GROWTH_PHASES: GrowthPhase[] = [
     growthStory: "Proudly raising two little fingers on both hands: \"Look world, I am Turning Two!\" — Dressed in pristine white & gold, poised like a royal Rajput princess, giggling in live video recordings.",
     traditionNote: "Vijayadashami Shaurya Pooja, Pushpa Varsha (shower of flowers), and sealing memories in this digital heirloom for the next 5 years.",
     familyMemory: "Practicing the \"Two\" peace sign all week with Rohit Papa and showing it with the brightest, most radiant smile!",
-    totalItemsCount: 24,
+    totalItemsCount: 44,
     sampleItems: []
   }
 ];

@@ -22,7 +22,9 @@ import {
   INITIAL_FAMILY_WISHES,
   INITIAL_TIME_CAPSULE_LETTERS
 } from './data/keepsakeData';
-import { lullabyPlayer } from './utils/audioPlayer';
+import { celebrationPlayer, lullabyPlayer } from './utils/audioPlayer';
+import { surpriseMemoryManager } from './utils/shuffleDeck';
+import { triggerPushpaVarsha } from './utils/confettiHelper';
 
 const STORAGE_KEY_MILESTONES = 'sengar_varnika_milestones_v5_phases';
 const STORAGE_KEY_WISHES = 'sengar_varnika_wishes_v2';
@@ -60,13 +62,14 @@ export default function App() {
   const [isPlayingMusic, setIsPlayingMusic] = useState(false);
 
   useEffect(() => {
-    lullabyPlayer.subscribe((playing) => {
+    return celebrationPlayer.subscribe((state) => {
+      const playing = typeof state === 'boolean' ? state : state.playing;
       setIsPlayingMusic(playing);
     });
   }, []);
 
   const handleToggleMusic = () => {
-    lullabyPlayer.toggle();
+    celebrationPlayer.toggle();
   };
 
   const handleAddMilestone = (newMilestone: Milestone) => {
@@ -124,6 +127,12 @@ export default function App() {
     if (el) el.scrollIntoView({ behavior: 'smooth' });
   };
 
+  const handleSurpriseMemory = () => {
+    triggerPushpaVarsha();
+    const { milestone } = surpriseMemoryManager.getNextSurprise('all');
+    setSelectedMilestone(milestone);
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-[#FFFDF9] text-[#2D2A26]" spellCheck={false}>
       
@@ -142,6 +151,7 @@ export default function App() {
         <HeroSection
           onExploreJourney={scrollToJourney}
           onExploreWishes={scrollToWishes}
+          onSurpriseMemory={handleSurpriseMemory}
         />
 
         {/* Interactive Timeline / Milestone Gallery */}
